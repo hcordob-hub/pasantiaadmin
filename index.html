@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - CTP Mercedes Norte</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/React-icon.svg/16px-React-icon.svg.png" type="image/x-icon">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { primary: '#1d4ed8', darkbg: '#0f172a', darkcard: '#1e293b' }
+                }
+            }
+        }
+    </script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Transiciones y animaciones generales */
+        body { transition: background-color 0.3s, color 0.3s; }
+        .fade-in { animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .scroll-hide { opacity: 0; transform: translateY(30px); transition: all 0.6s ease-out; }
+        .scroll-show { opacity: 1; transform: translateY(0); }
+
+        /* Efecto pulse para botón CTA */
+        .cta-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(29, 78, 216, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(29, 78, 216, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(29, 78, 216, 0); }
+        }
+
+        /* Skeleton Loaders */
+        .skeleton {
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        .dark .skeleton {
+            background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+            background-size: 200% 100%;
+        }
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background-color: #475569; }
+        
+        /* Pestañas Activas */
+        .tab-btn.active { border-bottom: 4px solid #1d4ed8; color: #1d4ed8; font-weight: bold; }
+        .dark .tab-btn.active { border-bottom: 4px solid #3b82f6; color: #3b82f6; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-darkbg dark:text-gray-200 transition-colors duration-300">
+
+    <!-- NAVBAR -->
+    <header class="fixed w-full top-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-server text-primary text-2xl hover:rotate-12 transition-transform cursor-pointer"></i>
+                <span class="font-bold text-lg md:text-xl tracking-tight">Admin <span class="text-primary hidden sm:inline">/ CTP Mercedes Norte</span></span>
+            </div>
+            <div class="hidden md:flex items-center gap-6">
+                <button id="btn-lang" class="hover:text-primary hover:scale-110 transition-all duration-200" title="Idioma"><i class="fas fa-language text-xl"></i></button>
+                <button id="btn-theme" class="hover:text-primary hover:scale-110 transition-all duration-200" title="Modo Oscuro"><i class="fas fa-moon text-xl" id="theme-icon"></i></button>
+            </div>
+            <button id="btn-mobile-menu" class="md:hidden text-2xl hover:text-primary transition-colors focus:outline-none"><i class="fas fa-bars"></i></button>
+        </div>
+        <!-- Menú Móvil -->
+        <div id="mobile-menu" class="hidden absolute w-full bg-white dark:bg-gray-900 shadow-lg border-t border-gray-100 dark:border-gray-800 flex-col">
+            <button class="text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-800" onclick="toggleTheme()"><i class="fas fa-moon text-primary w-6"></i> Cambiar Tema</button>
+        </div>
+    </header>
+
+    <!-- TOAST NOTIFICACIÓN -->
+    <div id="toast" class="fixed top-20 right-4 transform translate-x-full opacity-0 transition-all duration-300 bg-gray-800 dark:bg-gray-700 text-white px-6 py-4 rounded-lg shadow-2xl z-50 flex items-center gap-3 font-medium">
+        <i class="fas fa-info-circle text-blue-400 text-xl" id="toast-icon"></i>
+        <span id="toast-msg">Mensaje</span>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- PORTADA (HERO SECTION)                         -->
+    <!-- ============================================== -->
+    <section id="view-hero" class="min-h-screen flex flex-col items-center justify-center text-center px-4 fade-in">
+        <div class="inline-block p-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-primary mb-8 hover:scale-110 transition-transform duration-300 cursor-default">
+            <i class="fas fa-database text-6xl md:text-7xl"></i>
+        </div>
+        <h1 class="text-5xl md:text-6xl font-extrabold mb-4 text-gray-900 dark:text-white">
+            Sistema de <span class="text-primary">Administración</span>
+        </h1>
+        <p class="text-lg md:text-xl mb-12 max-w-2xl mx-auto text-gray-600 dark:text-gray-400">
+            Gestión centralizada de estudiantes y resultados de evaluación para la pasantía 2026 de Electrónica Industrial.
+        </p>
+        <button id="btn-enter-admin" class="cta-pulse bg-primary hover:bg-blue-800 text-white font-bold py-4 px-10 rounded-full shadow-lg transform transition-all duration-300 hover:-translate-y-2 flex items-center gap-3 text-lg">
+            Ingresar al Panel <i class="fas fa-sign-in-alt"></i>
+        </button>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- MAIN DASHBOARD (Oculto inicialmente)           -->
+    <!-- ============================================== -->
+    <main id="view-dashboard" class="hidden pt-24 pb-12 px-4 max-w-7xl mx-auto min-h-screen">
+        
+        <div class="text-center mb-10 fade-in">
+            <h2 class="text-3xl md:text-4xl font-extrabold mb-2">Panel de Control <span class="text-primary">2026</span></h2>
+            <p class="text-gray-500 dark:text-gray-400">Administra los estudiantes y visualiza las calificaciones obtenidas.</p>
+        </div>
+
+        <!-- TABS -->
+        <div class="flex justify-center border-b border-gray-200 dark:border-gray-700 mb-8 fade-in">
+            <button class="tab-btn active px-6 py-3 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 rounded-t-lg flex gap-2 items-center" data-target="tab-estudiantes">
+                <i class="fas fa-users"></i> Estudiantes
+            </button>
+            <button class="tab-btn px-6 py-3 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 rounded-t-lg flex gap-2 items-center text-gray-500" data-target="tab-evaluaciones">
+                <i class="fas fa-chart-bar"></i> Evaluaciones
+            </button>
+        </div>
+
+        <!-- TAB 1: ESTUDIANTES -->
+        <div id="tab-estudiantes" class="tab-content block space-y-8">
+            
+            <!-- Controles para agregar -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 scroll-hide">
+                <!-- Manual -->
+                <div class="bg-white dark:bg-darkcard p-6 rounded-xl shadow-md border border-gray-100 dark:border-gray-800 hover:shadow-lg transition-shadow">
+                    <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="fas fa-user-plus text-primary"></i> Agregar Manualmente</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Añade estudiantes individualmente a la base de datos.</p>
+                    <form id="form-add-student" class="flex gap-2">
+                        <input type="text" id="new-student-name" required placeholder="Nombre completo del estudiante" class="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all">
+                        <button type="submit" class="bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow transition-all hover:scale-105"><i class="fas fa-save"></i></button>
+                    </form>
+                </div>
+
+                <!-- CSV -->
+                <div class="bg-white dark:bg-darkcard p-6 rounded-xl shadow-md border border-gray-100 dark:border-gray-800 hover:shadow-lg transition-shadow">
+                    <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="fas fa-file-csv text-primary"></i> Carga Masiva (CSV)</h3>
+                    
+                    <!-- EXPLICACIÓN CSV -->
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-sm text-blue-800 dark:text-blue-300 mb-5 border border-blue-100 dark:border-blue-800">
+                        <p class="font-bold mb-2"><i class="fas fa-info-circle"></i> ¿Cómo subir estudiantes masivamente?</p>
+                        <ol class="list-decimal ml-5 space-y-1 text-gray-700 dark:text-gray-300">
+                            <li>Abre Excel, Sheets o el Bloc de Notas.</li>
+                            <li>Escribe <strong>un nombre por fila</strong> en la primera columna (sin títulos de encabezado).</li>
+                            <li>Guarda el archivo en formato <strong>.CSV (Delimitado por comas)</strong>.</li>
+                            <li>Selecciona el archivo abajo y haz clic en subir.</li>
+                        </ol>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-3 items-center">
+                        <input type="file" id="csv-file" accept=".csv" class="w-full sm:flex-1 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-blue-400 cursor-pointer border border-gray-200 dark:border-gray-700 rounded-lg p-1">
+                        <button id="btn-upload-csv" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg shadow transition-all hover:scale-105 whitespace-nowrap"><i class="fas fa-upload"></i> Subir Lista</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla Estudiantes -->
+            <div class="bg-white dark:bg-darkcard rounded-xl shadow-md border border-gray-100 dark:border-gray-800 overflow-hidden scroll-hide">
+                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="font-bold text-lg"><i class="fas fa-list text-primary"></i> Lista de Estudiantes</h3>
+                    <button id="btn-delete-all-students" class="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 px-3 py-1 rounded transition-colors text-sm font-bold flex items-center gap-2"><i class="fas fa-trash-alt"></i> Borrar Todos</button>
+                </div>
+                <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                    <table class="w-full text-left">
+                        <thead class="sticky top-0 bg-gray-50 dark:bg-gray-800 shadow-sm z-10">
+                            <tr class="text-gray-500 dark:text-gray-400">
+                                <th class="p-4 font-semibold">Nombre del Estudiante</th>
+                                <th class="p-4 font-semibold text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-students" class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <!-- JS Skeletons -->
+                            <tr id="skeleton-students"><td class="p-4"><div class="skeleton h-6 w-3/4 rounded"></div></td><td class="p-4"><div class="skeleton h-6 w-8 rounded float-right"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: EVALUACIONES -->
+        <div id="tab-evaluaciones" class="tab-content hidden space-y-8">
+            <div class="bg-white dark:bg-darkcard rounded-xl shadow-md border border-gray-100 dark:border-gray-800 overflow-hidden scroll-hide">
+                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="font-bold text-lg"><i class="fas fa-star text-yellow-500"></i> Calificaciones Registradas</h3>
+                    <button id="btn-delete-all-evals" class="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 px-3 py-1 rounded transition-colors text-sm font-bold flex items-center gap-2"><i class="fas fa-trash-alt"></i> Borrar Todas</button>
+                </div>
+                <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead class="sticky top-0 bg-gray-50 dark:bg-gray-800 shadow-sm z-10">
+                            <tr class="text-gray-500 dark:text-gray-400">
+                                <th class="p-4 font-semibold">Estudiante</th>
+                                <th class="p-4 font-semibold">Empresa</th>
+                                <th class="p-4 font-semibold">Fecha</th>
+                                <th class="p-4 font-semibold text-center">Nota /100</th>
+                                <th class="p-4 font-semibold text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-evaluations" class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <!-- JS Skeletons -->
+                            <tr id="skeleton-evals"><td class="p-4" colspan="5"><div class="skeleton h-6 w-full rounded"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Confirmación -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-darkcard p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4 transform scale-95 transition-transform duration-300" id="modal-content">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2"><i class="fas fa-exclamation-triangle text-red-500"></i> ¿Estás seguro?</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6" id="confirm-msg">Esta acción no se puede deshacer.</p>
+            <div class="flex justify-end gap-3">
+                <button id="btn-cancel-modal" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">Cancelar</button>
+                <button id="btn-confirm-modal" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors shadow">Sí, borrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Volver Arriba -->
+    <button id="btn-top" class="fixed bottom-6 right-6 bg-primary text-white p-4 rounded-full shadow-xl opacity-0 translate-y-10 pointer-events-none transition-all duration-500 hover:bg-blue-800 hover:-translate-y-2 z-50">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <!-- SCRIPTS UI & LOGIC -->
+    <script>
+        // 1. NAVEGACIÓN (Ir de Portada a Panel)
+        document.getElementById('btn-enter-admin').addEventListener('click', () => {
+            const hero = document.getElementById('view-hero');
+            const dashboard = document.getElementById('view-dashboard');
+            
+            hero.classList.add('hidden');
+            dashboard.classList.remove('hidden');
+            dashboard.classList.add('fade-in');
+            
+            // Iniciar animaciones scroll al abrir dashboard
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('scroll-show'); observer.unobserve(entry.target); } });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.scroll-hide').forEach(el => observer.observe(el));
+        });
+
+        // 2. TEMA Y MENÚ MÓVIL
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            document.getElementById('theme-icon').className = isDark ? 'fas fa-sun text-xl' : 'fas fa-moon text-xl';
+        }
+        document.getElementById('btn-theme').addEventListener('click', toggleTheme);
+        document.getElementById('btn-mobile-menu').addEventListener('click', () => {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+            document.getElementById('mobile-menu').classList.toggle('flex');
+        });
+        document.getElementById('btn-lang').addEventListener('click', () => showToast("Selector de idioma en desarrollo."));
+
+        // 3. TABS DASHBOARD
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.classList.add('text-gray-500'); });
+                e.currentTarget.classList.add('active');
+                e.currentTarget.classList.remove('text-gray-500');
+                
+                document.querySelectorAll('.tab-content').forEach(tc => { tc.classList.add('hidden'); tc.classList.remove('block'); });
+                const target = e.currentTarget.getAttribute('data-target');
+                document.getElementById(target).classList.add('block', 'fade-in');
+                document.getElementById(target).classList.remove('hidden');
+            });
+        });
+
+        // 4. VOLVER ARRIBA Y TOAST
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('btn-top');
+            if (window.scrollY > 200) { btn.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none'); } 
+            else { btn.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none'); }
+        });
+        document.getElementById('btn-top').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            toast.className = `fixed top-20 right-4 transform transition-all duration-300 text-white px-6 py-4 rounded-lg shadow-2xl z-50 flex items-center gap-3 font-medium ${type === 'error' ? 'bg-red-600' : type === 'success' ? 'bg-green-600' : 'bg-gray-800 dark:bg-gray-700'}`;
+            icon.className = `text-xl ${type === 'error' ? 'fas fa-times-circle' : type === 'success' ? 'fas fa-check-circle' : 'fas fa-info-circle text-blue-400'}`;
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('translate-x-full', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-x-full', 'opacity-0'), 4000);
+        }
+
+        // 5. MODAL DE CONFIRMACIÓN
+        let confirmAction = null;
+        function openConfirm(msg, action) {
+            document.getElementById('confirm-msg').innerText = msg;
+            confirmAction = action;
+            const modal = document.getElementById('confirm-modal');
+            const content = document.getElementById('modal-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+        }
+        document.getElementById('btn-cancel-modal').addEventListener('click', () => {
+            const modal = document.getElementById('confirm-modal');
+            const content = document.getElementById('modal-content');
+            modal.classList.add('opacity-0'); content.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        });
+        document.getElementById('btn-confirm-modal').addEventListener('click', () => {
+            if(confirmAction) confirmAction();
+            document.getElementById('btn-cancel-modal').click();
+        });
+    </script>
+
+    <!-- ============================================== -->
+    <!-- FIREBASE DB CONFIG & ACTIONS                   -->
+    <!-- ============================================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBG6HHaZ1p8sl0NyRypcoLbY4zv21n8z1M",
+            authDomain: "pasantias-ctp-mercedes-norte.firebaseapp.com",
+            projectId: "pasantias-ctp-mercedes-norte",
+            storageBucket: "pasantias-ctp-mercedes-norte.firebasestorage.app",
+            messagingSenderId: "707990666841",
+            appId: "1:707990666841:web:c5f08da7cbc4ef4f29fb48"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- LECTURA ---
+        async function fetchStudents() {
+            const tbody = document.getElementById('table-students');
+            try {
+                const querySnapshot = await getDocs(collection(db, "estudiantes"));
+                tbody.innerHTML = '';
+                if(querySnapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="2" class="p-6 text-center text-gray-500 bg-gray-50 dark:bg-gray-800/20 italic rounded-b-lg">No hay estudiantes registrados en la base de datos.</td></tr>';
+                    return;
+                }
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-blue-50/50 dark:hover:bg-gray-800/80 transition-colors border-b dark:border-gray-700 group">
+                            <td class="p-4 font-medium text-gray-700 dark:text-gray-300">${data.nombre}</td>
+                            <td class="p-4 text-right">
+                                <button onclick="window.borrarDoc('estudiantes', '${doc.id}')" class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 opacity-50 group-hover:opacity-100 transition-all bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-2 rounded-lg shadow-sm" title="Eliminar estudiante"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) { showToast("Error de conexión con Firebase al cargar estudiantes", "error"); }
+        }
+
+        async function fetchEvals() {
+            const tbody = document.getElementById('table-evaluations');
+            try {
+                const querySnapshot = await getDocs(collection(db, "evaluaciones"));
+                tbody.innerHTML = '';
+                if(querySnapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-gray-500 bg-gray-50 dark:bg-gray-800/20 italic rounded-b-lg">Aún no hay calificaciones registradas.</td></tr>';
+                    return;
+                }
+                querySnapshot.forEach((documento) => {
+                    const data = documento.data();
+                    const fecha = data.fecha ? new Date(data.fecha).toLocaleDateString('es-CR') : 'N/A';
+                    const nota = data.nota_final || data.nota_base_100 || 0;
+                    const colorNota = nota >= 70 ? 'text-green-600 bg-green-100 dark:bg-green-900/30' : 'text-red-600 bg-red-100 dark:bg-red-900/30';
+                    
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-blue-50/50 dark:hover:bg-gray-800/80 transition-colors border-b dark:border-gray-700 group text-gray-700 dark:text-gray-300">
+                            <td class="p-4 font-medium">${data.estudiante_nombre || 'Desconocido'}</td>
+                            <td class="p-4"><i class="fas fa-building text-gray-400 mr-2"></i> ${data.empresa || 'N/A'}</td>
+                            <td class="p-4 text-sm text-gray-500">${fecha}</td>
+                            <td class="p-4 text-center"><span class="px-3 py-1 rounded-full font-bold text-sm ${colorNota}">${nota}</span></td>
+                            <td class="p-4 text-right">
+                                <button onclick="window.borrarDoc('evaluaciones', '${documento.id}')" class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 opacity-50 group-hover:opacity-100 transition-all bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-2 rounded-lg shadow-sm" title="Eliminar evaluación"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) { showToast("Error de conexión al cargar evaluaciones", "error"); }
+        }
+
+        // --- AGREGAR MANUAL ---
+        document.getElementById('form-add-student').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('new-student-name');
+            const name = input.value.trim();
+            if(!name) return;
+            try {
+                await addDoc(collection(db, "estudiantes"), { nombre: name });
+                showToast("Estudiante agregado correctamente", "success");
+                input.value = '';
+                fetchStudents();
+            } catch (error) { showToast("Error al agregar el estudiante", "error"); }
+        });
+
+        // --- CARGA MASIVA CSV ---
+        document.getElementById('btn-upload-csv').addEventListener('click', () => {
+            const fileInput = document.getElementById('csv-file');
+            if(!fileInput.files.length) { showToast("Debes seleccionar un archivo CSV primero.", "error"); return; }
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = async (e) => {
+                const text = e.target.result;
+                const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0 && l.toLowerCase() !== 'nombre');
+                
+                if(lines.length === 0) { showToast("El archivo está vacío o el formato es incorrecto.", "error"); return; }
+                
+                showToast(`Subiendo ${lines.length} estudiantes a la base de datos...`, "info");
+                try {
+                    const batch = writeBatch(db);
+                    lines.forEach(name => {
+                        const newRef = doc(collection(db, "estudiantes"));
+                        batch.set(newRef, { nombre: name });
+                    });
+                    await batch.commit();
+                    showToast(`¡Se cargaron ${lines.length} estudiantes con éxito!`, "success");
+                    fileInput.value = '';
+                    fetchStudents();
+                } catch (error) {
+                    showToast("Ocurrió un error en la carga masiva.", "error");
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // --- BORRAR INDIVIDUAL (Global scope) ---
+        window.borrarDoc = (coleccion, id) => {
+            openConfirm(`Se eliminará de forma permanente este registro de la sección "${coleccion}".`, async () => {
+                try {
+                    await deleteDoc(doc(db, coleccion, id));
+                    showToast("Registro eliminado correctamente", "success");
+                    if(coleccion === 'estudiantes') fetchStudents();
+                    else fetchEvals();
+                } catch (error) { showToast("Error al intentar eliminar el registro", "error"); }
+            });
+        };
+
+        // --- BORRAR TODO ---
+        async function borrarColeccionCompleta(coleccion) {
+            try {
+                const snapshot = await getDocs(collection(db, coleccion));
+                if(snapshot.empty) { showToast(`La lista de ${coleccion} ya se encuentra vacía.`, "info"); return; }
+                
+                showToast(`Borrando ${snapshot.size} registros...`, "info");
+                const batch = writeBatch(db);
+                snapshot.forEach((documento) => {
+                    batch.delete(doc(db, coleccion, documento.id));
+                });
+                await batch.commit();
+                showToast(`Se han borrado todos los datos de ${coleccion}.`, "success");
+                
+                if(coleccion === 'estudiantes') fetchStudents();
+                else fetchEvals();
+            } catch (error) {
+                showToast(`Error al intentar vaciar la base de datos de ${coleccion}.`, "error");
+                console.error(error);
+            }
+        }
+
+        document.getElementById('btn-delete-all-students').addEventListener('click', () => {
+            openConfirm("Se eliminarán de la base de datos TODOS los estudiantes de Electrónica. ¿Estás absolutamente seguro de continuar?", () => borrarColeccionCompleta('estudiantes'));
+        });
+        
+        document.getElementById('btn-delete-all-evals').addEventListener('click', () => {
+            openConfirm("Se eliminarán de la base de datos TODAS las calificaciones registradas. ¿Estás absolutamente seguro de continuar?", () => borrarColeccionCompleta('evaluaciones'));
+        });
+
+        // Inicializar datos al cargar la app
+        fetchStudents();
+        fetchEvals();
+    </script>
+</body>
+</html>
