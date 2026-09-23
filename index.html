@@ -201,15 +201,17 @@
                         <thead class="sticky top-0 bg-gray-50 dark:bg-gray-800 shadow-sm z-10">
                             <tr class="text-gray-500 dark:text-gray-400">
                                 <th class="p-4 font-semibold">Estudiante</th>
+                                <th class="p-4 font-semibold">Docente</th>
                                 <th class="p-4 font-semibold">Empresa</th>
+                                <th class="p-4 font-semibold">Encargado Empresa</th>
                                 <th class="p-4 font-semibold">Fecha</th>
                                 <th class="p-4 font-semibold text-center">Nota /100</th>
                                 <th class="p-4 font-semibold text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="table-evaluations" class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <!-- JS Skeletons -->
-                            <tr id="skeleton-evals"><td class="p-4" colspan="5"><div class="skeleton h-6 w-full rounded"></div></td></tr>
+                            <!-- JS Skeletons (Colspan ajustado a 7) -->
+                            <tr id="skeleton-evals"><td class="p-4" colspan="7"><div class="skeleton h-6 w-full rounded"></div></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -245,7 +247,6 @@
             dashboard.classList.remove('hidden');
             dashboard.classList.add('fade-in');
             
-            // Iniciar animaciones scroll al abrir dashboard
             const observer = new IntersectionObserver(entries => {
                 entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('scroll-show'); observer.unobserve(entry.target); } });
             }, { threshold: 0.1 });
@@ -338,7 +339,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- LECTURA ---
+        // --- LECTURA DE ESTUDIANTES ---
         async function fetchStudents() {
             const tbody = document.getElementById('table-students');
             try {
@@ -362,13 +363,14 @@
             } catch (error) { showToast("Error de conexión con Firebase al cargar estudiantes", "error"); }
         }
 
+        // --- LECTURA DE EVALUACIONES (INCLUYENDO DOCENTE Y ENCARGADO) ---
         async function fetchEvals() {
             const tbody = document.getElementById('table-evaluations');
             try {
                 const querySnapshot = await getDocs(collection(db, "evaluaciones"));
                 tbody.innerHTML = '';
                 if(querySnapshot.empty) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-gray-500 bg-gray-50 dark:bg-gray-800/20 italic rounded-b-lg">Aún no hay calificaciones registradas.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-gray-500 bg-gray-50 dark:bg-gray-800/20 italic rounded-b-lg">Aún no hay calificaciones registradas.</td></tr>';
                     return;
                 }
                 querySnapshot.forEach((documento) => {
@@ -380,7 +382,9 @@
                     tbody.innerHTML += `
                         <tr class="hover:bg-blue-50/50 dark:hover:bg-gray-800/80 transition-colors border-b dark:border-gray-700 group text-gray-700 dark:text-gray-300">
                             <td class="p-4 font-medium">${data.estudiante_nombre || 'Desconocido'}</td>
+                            <td class="p-4"><i class="fas fa-chalkboard-teacher text-blue-500 mr-2"></i> ${data.docente || 'N/A'}</td>
                             <td class="p-4"><i class="fas fa-building text-gray-400 mr-2"></i> ${data.empresa || 'N/A'}</td>
+                            <td class="p-4"><i class="fas fa-user-tie text-indigo-500 mr-2"></i> ${data.encargado_empresa || 'N/A'}</td>
                             <td class="p-4 text-sm text-gray-500">${fecha}</td>
                             <td class="p-4 text-center"><span class="px-3 py-1 rounded-full font-bold text-sm ${colorNota}">${nota}</span></td>
                             <td class="p-4 text-right">
