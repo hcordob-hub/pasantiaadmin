@@ -23,6 +23,9 @@
     
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- jsPDF para descarga de reportes PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         /* Transiciones y animaciones generales */
@@ -91,9 +94,7 @@
         <span id="toast-msg">Mensaje</span>
     </div>
 
-    <!-- ============================================== -->
-    <!-- PORTADA (HERO SECTION)                         -->
-    <!-- ============================================== -->
+    <!-- PORTADA (HERO SECTION) -->
     <section id="view-hero" class="min-h-screen flex flex-col items-center justify-center text-center px-4 fade-in">
         <div class="inline-block p-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-primary mb-8 hover:scale-110 transition-transform duration-300 cursor-default">
             <i class="fas fa-database text-6xl md:text-7xl"></i>
@@ -109,9 +110,7 @@
         </button>
     </section>
 
-    <!-- ============================================== -->
-    <!-- MAIN DASHBOARD (Oculto inicialmente)           -->
-    <!-- ============================================== -->
+    <!-- MAIN DASHBOARD -->
     <main id="view-dashboard" class="hidden pt-24 pb-12 px-4 max-w-7xl mx-auto min-h-screen">
         
         <div class="text-center mb-10 fade-in">
@@ -148,7 +147,6 @@
                 <div class="bg-white dark:bg-darkcard p-6 rounded-xl shadow-md border border-gray-100 dark:border-gray-800 hover:shadow-lg transition-shadow">
                     <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="fas fa-file-csv text-primary"></i> Carga Masiva (CSV)</h3>
                     
-                    <!-- EXPLICACIÓN CSV -->
                     <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-sm text-blue-800 dark:text-blue-300 mb-5 border border-blue-100 dark:border-blue-800">
                         <p class="font-bold mb-2"><i class="fas fa-info-circle"></i> ¿Cómo subir estudiantes masivamente?</p>
                         <ol class="list-decimal ml-5 space-y-1 text-gray-700 dark:text-gray-300">
@@ -181,7 +179,6 @@
                             </tr>
                         </thead>
                         <tbody id="table-students" class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <!-- JS Skeletons -->
                             <tr id="skeleton-students"><td class="p-4"><div class="skeleton h-6 w-3/4 rounded"></div></td><td class="p-4"><div class="skeleton h-6 w-8 rounded float-right"></div></td></tr>
                         </tbody>
                     </table>
@@ -210,7 +207,6 @@
                             </tr>
                         </thead>
                         <tbody id="table-evaluations" class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <!-- JS Skeletons (Colspan ajustado a 7) -->
                             <tr id="skeleton-evals"><td class="p-4" colspan="7"><div class="skeleton h-6 w-full rounded"></div></td></tr>
                         </tbody>
                     </table>
@@ -238,7 +234,7 @@
 
     <!-- SCRIPTS UI & LOGIC -->
     <script>
-        // 1. NAVEGACIÓN (Ir de Portada a Panel)
+        // Navegación
         document.getElementById('btn-enter-admin').addEventListener('click', () => {
             const hero = document.getElementById('view-hero');
             const dashboard = document.getElementById('view-dashboard');
@@ -253,7 +249,7 @@
             document.querySelectorAll('.scroll-hide').forEach(el => observer.observe(el));
         });
 
-        // 2. TEMA Y MENÚ MÓVIL
+        // Tema y menú móvil
         function toggleTheme() {
             document.documentElement.classList.toggle('dark');
             const isDark = document.documentElement.classList.contains('dark');
@@ -266,7 +262,7 @@
         });
         document.getElementById('btn-lang').addEventListener('click', () => showToast("Selector de idioma en desarrollo."));
 
-        // 3. TABS DASHBOARD
+        // Pestañas
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.classList.add('text-gray-500'); });
@@ -280,7 +276,7 @@
             });
         });
 
-        // 4. VOLVER ARRIBA Y TOAST
+        // Volver arriba
         window.addEventListener('scroll', () => {
             const btn = document.getElementById('btn-top');
             if (window.scrollY > 200) { btn.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none'); } 
@@ -298,7 +294,7 @@
             setTimeout(() => toast.classList.add('translate-x-full', 'opacity-0'), 4000);
         }
 
-        // 5. MODAL DE CONFIRMACIÓN
+        // Modal
         let confirmAction = null;
         function openConfirm(msg, action) {
             document.getElementById('confirm-msg').innerText = msg;
@@ -318,11 +314,112 @@
             if(confirmAction) confirmAction();
             document.getElementById('btn-cancel-modal').click();
         });
+
+        // Generador y descargador de PDF para cada evaluación
+        window.descargarReportePDF = function(encodedData) {
+            try {
+                const data = JSON.parse(decodeURIComponent(encodedData));
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+
+                const colorPrimario = [29, 78, 216]; // #1d4ed8
+                const colorTexto = [30, 41, 59];
+
+                // Cabecera institucional
+                doc.setFillColor(...colorPrimario);
+                doc.rect(0, 0, 216, 26, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(16);
+                doc.setFont("helvetica", "bold");
+                doc.text("CTP MERCEDES NORTE", 108, 11, { align: "center" });
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+                doc.text("Especialidad de Electrónica Industrial - Informe de Evaluación de Pasantía", 108, 19, { align: "center" });
+
+                // Título del documento
+                doc.setTextColor(...colorTexto);
+                doc.setFontSize(14);
+                doc.setFont("helvetica", "bold");
+                doc.text("COMPROBANTE OFICIAL DE EVALUACIÓN", 20, 40);
+
+                doc.setDrawColor(203, 213, 225);
+                doc.line(20, 43, 196, 43);
+
+                // Campos principales
+                doc.setFontSize(11);
+                const items = [
+                    ["Estudiante:", data.estudiante_nombre || 'N/A'],
+                    ["Docente Evaluador:", data.docente || 'N/A'],
+                    ["Empresa / Centro de Práctica:", data.empresa || 'N/A'],
+                    ["Encargado / Tutor Empresarial:", data.encargado_empresa || 'N/A'],
+                    ["Fecha de Registro:", data.fechaFormatted || 'N/A']
+                ];
+
+                let y = 54;
+                items.forEach(([label, valor]) => {
+                    doc.setFont("helvetica", "bold");
+                    doc.text(label, 22, y);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(String(valor), 85, y);
+                    y += 10;
+                });
+
+                // Tarjeta de Calificación
+                y += 5;
+                const notaNum = Number(data.nota) || 0;
+                const aprobado = notaNum >= 70;
+
+                doc.setFillColor(248, 250, 252);
+                doc.setDrawColor(226, 232, 240);
+                doc.roundedRect(20, y, 176, 38, 3, 3, 'FD');
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(12);
+                doc.text("Calificación Obtenida:", 30, y + 15);
+
+                doc.setFontSize(22);
+                if (aprobado) {
+                    doc.setTextColor(22, 101, 52); // Verde
+                } else {
+                    doc.setTextColor(153, 27, 27); // Rojo
+                }
+                doc.text(`${notaNum} / 100`, 30, y + 28);
+
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "bold");
+                doc.text(`Condición: ${aprobado ? 'APROBADO' : 'REPROBADO'}`, 110, y + 22);
+
+                // Espacio para firmas
+                const yFirmas = 205;
+                doc.setTextColor(...colorTexto);
+                doc.setDrawColor(148, 163, 184);
+
+                doc.line(25, yFirmas, 95, yFirmas);
+                doc.line(120, yFirmas, 190, yFirmas);
+
+                doc.setFontSize(9);
+                doc.setFont("helvetica", "normal");
+                doc.text("Firma del Docente Supervisor", 60, yFirmas + 6, { align: "center" });
+                doc.text("Firma y Sello de la Empresa", 155, yFirmas + 6, { align: "center" });
+
+                // Pie de página
+                doc.setFontSize(8);
+                doc.setTextColor(148, 163, 184);
+                const folio = (data.id || 'N/A').toUpperCase();
+                doc.text(`Identificador de Registro: ${folio}  |  Generado: ${new Date().toLocaleDateString('es-CR')}`, 108, 260, { align: "center" });
+
+                // Descarga automática del archivo
+                const filenameClean = (data.estudiante_nombre || 'estudiante').toLowerCase().replace(/[^a-z0-9]/g, '_');
+                doc.save(`calificacion_${filenameClean}.pdf`);
+                showToast("PDF descargado correctamente", "success");
+            } catch (err) {
+                console.error(err);
+                showToast("No se pudo generar el documento PDF", "error");
+            }
+        };
     </script>
 
-    <!-- ============================================== -->
-    <!-- FIREBASE DB CONFIG & ACTIONS                   -->
-    <!-- ============================================== -->
+    <!-- FIREBASE DB CONFIG & ACTIONS -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
         import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
@@ -349,13 +446,13 @@
                     tbody.innerHTML = '<tr><td colspan="2" class="p-6 text-center text-gray-500 bg-gray-50 dark:bg-gray-800/20 italic rounded-b-lg">No hay estudiantes registrados en la base de datos.</td></tr>';
                     return;
                 }
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
+                querySnapshot.forEach((documento) => {
+                    const data = documento.data();
                     tbody.innerHTML += `
                         <tr class="hover:bg-blue-50/50 dark:hover:bg-gray-800/80 transition-colors border-b dark:border-gray-700 group">
                             <td class="p-4 font-medium text-gray-700 dark:text-gray-300">${data.nombre}</td>
                             <td class="p-4 text-right">
-                                <button onclick="window.borrarDoc('estudiantes', '${doc.id}')" class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 opacity-50 group-hover:opacity-100 transition-all bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-2 rounded-lg shadow-sm" title="Eliminar estudiante"><i class="fas fa-trash"></i></button>
+                                <button onclick="window.borrarDoc('estudiantes', '${documento.id}')" class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 opacity-50 group-hover:opacity-100 transition-all bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-2 rounded-lg shadow-sm" title="Eliminar estudiante"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>
                     `;
@@ -363,7 +460,7 @@
             } catch (error) { showToast("Error de conexión con Firebase al cargar estudiantes", "error"); }
         }
 
-        // --- LECTURA DE EVALUACIONES (INCLUYENDO DOCENTE Y ENCARGADO) ---
+        // --- LECTURA DE EVALUACIONES CON BOTÓN DE DESCARGA PDF ---
         async function fetchEvals() {
             const tbody = document.getElementById('table-evaluations');
             try {
@@ -379,6 +476,18 @@
                     const nota = data.nota_final || data.nota_base_100 || 0;
                     const colorNota = nota >= 70 ? 'text-green-600 bg-green-100 dark:bg-green-900/30' : 'text-red-600 bg-red-100 dark:bg-red-900/30';
                     
+                    // Empaquetar datos para el generador de PDF
+                    const payload = {
+                        id: documento.id,
+                        estudiante_nombre: data.estudiante_nombre,
+                        docente: data.docente,
+                        empresa: data.empresa,
+                        encargado_empresa: data.encargado_empresa,
+                        fechaFormatted: fecha,
+                        nota: nota
+                    };
+                    const payloadString = encodeURIComponent(JSON.stringify(payload));
+                    
                     tbody.innerHTML += `
                         <tr class="hover:bg-blue-50/50 dark:hover:bg-gray-800/80 transition-colors border-b dark:border-gray-700 group text-gray-700 dark:text-gray-300">
                             <td class="p-4 font-medium">${data.estudiante_nombre || 'Desconocido'}</td>
@@ -388,7 +497,14 @@
                             <td class="p-4 text-sm text-gray-500">${fecha}</td>
                             <td class="p-4 text-center"><span class="px-3 py-1 rounded-full font-bold text-sm ${colorNota}">${nota}</span></td>
                             <td class="p-4 text-right">
-                                <button onclick="window.borrarDoc('evaluaciones', '${documento.id}')" class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 opacity-50 group-hover:opacity-100 transition-all bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-2 rounded-lg shadow-sm" title="Eliminar evaluación"><i class="fas fa-trash"></i></button>
+                                <div class="inline-flex items-center gap-2">
+                                    <button onclick="window.descargarReportePDF('${payloadString}')" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-700/60 p-2 rounded-lg shadow-sm transition-all hover:scale-105" title="Descargar comprobante en PDF">
+                                        <i class="fas fa-file-download"></i>
+                                    </button>
+                                    <button onclick="window.borrarDoc('evaluaciones', '${documento.id}')" class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 opacity-70 hover:opacity-100 transition-all bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-2 rounded-lg shadow-sm" title="Eliminar evaluación">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     `;
@@ -443,7 +559,7 @@
             reader.readAsText(file);
         });
 
-        // --- BORRAR INDIVIDUAL (Global scope) ---
+        // --- BORRAR INDIVIDUAL ---
         window.borrarDoc = (coleccion, id) => {
             openConfirm(`Se eliminará de forma permanente este registro de la sección "${coleccion}".`, async () => {
                 try {
@@ -485,7 +601,7 @@
             openConfirm("Se eliminarán de la base de datos TODAS las calificaciones registradas. ¿Estás absolutamente seguro de continuar?", () => borrarColeccionCompleta('evaluaciones'));
         });
 
-        // Inicializar datos al cargar la app
+        // Inicializar datos
         fetchStudents();
         fetchEvals();
     </script>
